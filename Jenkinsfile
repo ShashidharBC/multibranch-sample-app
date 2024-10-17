@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         DOCKER_CREDENTIALS_ID = 'dockerhub' // Use your configured credentials ID
-        DOCKER_IMAGE_NAME = 'shashidharabc/multibranch-sample-app'
+        DOCKER_IMAGE_NAME = '9108205512/multibranch-sample-app'
         REGISTRY_URL = '' // Leave this empty for Docker Hub
     }
 
