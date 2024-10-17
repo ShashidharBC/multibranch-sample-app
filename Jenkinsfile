@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_CREDENTIALS_ID = 'dockerhub'
+        DOCKER_CREDENTIALS_ID = 'dockerhub' // Use your configured credentials ID
         DOCKER_IMAGE_NAME = 'shashidharabc/multibranch-sample-app'
-        REGISTRY_URL = 'https://index.docker.io/v1/'
+        REGISTRY_URL = '' // Leave this empty for Docker Hub
     }
 
     stages {
@@ -23,6 +23,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
+                    // Build the Docker image
                     dockerImage = docker.build("${DOCKER_IMAGE_NAME}:${env.BUILD_ID}")
                     echo "Docker image ${DOCKER_IMAGE_NAME}:${env.BUILD_ID} built successfully."
                 }
@@ -42,11 +43,16 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
-                    echo "Attempting to push the Docker image..."
-                    docker.withRegistry("${REGISTRY_URL}", "${DOCKER_CREDENTIALS_ID}") {
-                        dockerImage.push()
+                    try {
+                        echo "Attempting to push the Docker image ${DOCKER_IMAGE_NAME}:${env.BUILD_ID}..."
+                        docker.withRegistry("${REGISTRY_URL}", "${DOCKER_CREDENTIALS_ID}") {
+                            dockerImage.push()
+                        }
+                        echo "Docker image ${DOCKER_IMAGE_NAME}:${env.BUILD_ID} pushed to Docker Hub successfully."
+                    } catch (Exception e) {
+                        echo "Failed to push Docker image: ${e.message}"
+                        currentBuild.result = 'FAILURE' // Mark the build as failed
                     }
-                    echo "Docker image pushed to Docker Hub successfully."
                 }
             }
         }
@@ -54,6 +60,7 @@ pipeline {
         stage('Cleanup') {
             steps {
                 script {
+                    // Remove the built image after pushing
                     dockerImage.inside {
                         sh 'docker rmi ${DOCKER_IMAGE_NAME}:${env.BUILD_ID}'
                     }
