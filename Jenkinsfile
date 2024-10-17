@@ -10,7 +10,13 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/your-username/your-repo.git', branch: 'main'
+                git url: 'https://github.com/ShashidharBC/multibranch-sample-app.git', branch: 'main'
+            }
+        }
+
+        stage('Check Docker') {
+            steps {
+                sh 'docker --version'
             }
         }
 
@@ -18,6 +24,17 @@ pipeline {
             steps {
                 script {
                     dockerImage = docker.build("${DOCKER_IMAGE_NAME}:${env.BUILD_ID}")
+                    echo "Docker image ${DOCKER_IMAGE_NAME}:${env.BUILD_ID} built successfully."
+                }
+            }
+        }
+
+        stage('Print Environment Variables') {
+            steps {
+                script {
+                    echo "DOCKER_CREDENTIALS_ID: ${DOCKER_CREDENTIALS_ID}"
+                    echo "DOCKER_IMAGE_NAME: ${DOCKER_IMAGE_NAME}"
+                    echo "REGISTRY_URL: ${REGISTRY_URL}"
                 }
             }
         }
@@ -25,9 +42,11 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
+                    echo "Attempting to push the Docker image..."
                     docker.withRegistry("${REGISTRY_URL}", "${DOCKER_CREDENTIALS_ID}") {
                         dockerImage.push()
                     }
+                    echo "Docker image pushed to Docker Hub successfully."
                 }
             }
         }
